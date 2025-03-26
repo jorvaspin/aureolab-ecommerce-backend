@@ -11,4 +11,7 @@ stripeRouter.post('/webhook',
   stripeWebhookHandler
 );
 
+// nueva ruta para verificar la sesión de Stripe
+stripeRouter.get('/verify-stripe-session/:sessionId', verifyStripeSession);
+
 export default stripeRouter;

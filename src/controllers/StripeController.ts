@@ -122,6 +122,59 @@ const createPaymentIntent = async (req: Request, res: Response) => {
   }
 };
 
+// verificar la sesión de Stripe y actualizar el estado de la orden
+const verifyStripeSession = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { sessionId } = req.params;
+
+    // Buscamos la orden con este sessionId (paymentIntentId)
+    const order = await Order.findOne({
+      where: { paymentIntentId: sessionId }
+    });
+
+    if (!order) {
+      res.status(404).json({ 
+        message: 'Orden no encontrada' 
+      });
+      return;
+    }
+
+    // Verificamos el estado del pago en Stripe
+    const paymentIntent = await stripe.paymentIntents.retrieve(sessionId);
+
+    // Verificamos si el pago fue exitoso
+    if (paymentIntent.status === 'succeeded') {
+      // Actualizamos el estado de la orden a PAID
+      order.status = OrderStatus.PAID;
+      await order.save();
+
+      // Devolvemos los detalles de la orden
+      res.json({
+        message: 'Orden verificada y actualizada',
+        order: {
+          id: order.id,
+          total: order.total,
+          status: order.status,
+          createdAt: order.createdAt
+        }
+      });
+    } else {
+      res.status(400).json({ 
+        message: 'El pago aún no ha sido confirmado',
+        currentStatus: paymentIntent.status
+      });
+    }
+
+  } catch (error) {
+    console.error('Error verificando sesión de Stripe:', error);
+    res.status(500).json({ 
+      message: 'Error al verificar la sesión de pago',
+      error: error instanceof Error ? error.message : 'Error desconocido'
+    });
+  }
+};
+
 export {
-  createPaymentIntent
+  createPaymentIntent,
+  verifyStripeSession
 };
