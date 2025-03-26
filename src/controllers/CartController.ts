@@ -80,13 +80,13 @@ class CartController {
   // añadimos producto al carrito
   static async addToCart(req: Request, res: Response): Promise<void> {
     try {
-      const { productId, quantity = 1 } = req.body;
-      const cartId = req.cookies.cartId;
+      const { cartId, productId, quantity = 1 } = req.body;
 
       if (!cartId) {
         res.status(400).json({ message: 'Carrito no encontrado' });
         return;
       }
+      
 
       // verificamos si el producto existe y tiene stock
       const product = await Product.findByPk(productId);
