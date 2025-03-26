@@ -1,6 +1,6 @@
 import express from 'express';
 import bodyParser from 'body-parser';
-import { createPaymentIntent, stripeWebhookHandler } from '../controllers/StripeController';
+import { createPaymentIntent, stripeWebhookHandler, verifyStripeSession } from '../controllers/StripeController';
 
 const stripeRouter = express.Router();
 
