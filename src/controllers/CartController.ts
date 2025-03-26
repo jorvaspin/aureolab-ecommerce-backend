@@ -24,34 +24,52 @@ class CartController {
   // obtenemos o creamos un carrito
   static async getOrCreateCart(req: Request, res: Response) {
     try {
-      // buscamos el cartId de los parámetros o cookies
       let cartId = req.query.cartId as string || 
                    req.body.cartId || 
                    req.cookies.cartId;
-
-      // si no hay cartId, generamos uno nuevo
+  
+      // Si hay un cartId, verificamos si está usado
+      if (cartId) {
+        const existingCart = await Cart.findByPk(cartId);
+        
+        // Si el carrito existe y está usado, generamos uno nuevo
+        if (existingCart?.used) {
+          cartId = `cart_${uuidv4()}`;
+          
+          // Establecemos nueva cookie con el nuevo cartId
+          res.cookie('cartId', cartId, { 
+            maxAge: 30 * 24 * 60 * 60 * 1000, // 30 días
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax'
+          });
+        }
+      }
+  
+      // Si no hay cartId o el anterior estaba usado, generamos uno nuevo
       if (!cartId) {
         cartId = `cart_${uuidv4()}`;
         
-        // establecemos la cookie
+        // Establecemos la cookie
         res.cookie('cartId', cartId, { 
           maxAge: 30 * 24 * 60 * 60 * 1000, // 30 días
           httpOnly: true,
           secure: process.env.NODE_ENV === 'production',
-          sameSite: 'lax' // importante para compatibilidad entre dominios
+          sameSite: 'lax'
         });
       }
-
-      // uscamos o creamos el carrito
+  
+      // Buscamos o creamos el carrito
       const [cart, created] = await Cart.findOrCreate({
         where: { id: cartId },
         defaults: { 
           id: cartId,
-          sessionId: req.sessionID || null
+          sessionId: req.sessionID || null,
+          used: false // Aseguramos que sea un carrito nuevo
         }
       });
-
-      // obtenemos el carrito con sus items
+  
+      // Obtenemos el carrito con sus items
       const foundCart = await Cart.findByPk(cartId, {
         include: [
           { 
@@ -61,13 +79,13 @@ class CartController {
           }
         ]
       });
-
+  
       res.json({ 
         cart: foundCart, 
         created,
         cartId: cartId 
       });
-
+  
     } catch (error) {
       console.error('Error al obtener/crear carrito:', error);
       res.status(500).json({ 
@@ -86,7 +104,7 @@ class CartController {
         res.status(400).json({ message: 'Carrito no encontrado' });
         return;
       }
-      
+
 
       // verificamos si el producto existe y tiene stock
       const product = await Product.findByPk(productId);
