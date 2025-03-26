@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { Op } from 'sequelize';
-import Order, { OrderStatus } from '../models/Order';
+import Order, { OrderStatus, OrderItem } from '../models/Order';
 import { Cart, CartItem } from '../models/Cart';
 import Product from '../models/Product';
 import sequelize from '../config/database';
@@ -101,17 +101,17 @@ class OrderController {
   // funcion mejorada de stripe checkout session
   static async createCheckoutSession(req: Request, res: Response): Promise<void> {
     const transaction = await sequelize.transaction();
-
+  
     try {
       const { cartId } = req.body;
-
+  
       // buscamos los productos por el cartId
       const cart = await Cart.findByPk(cartId, {
         include: ['items']
       });
-
+  
       const items = await cart?.getItems();
-
+  
       // validamos los productos
       if (!items || items.length === 0) {
         res.status(400).json({ 
@@ -119,11 +119,11 @@ class OrderController {
         });
         return;
       }
-
+  
       const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [];
       let totalAmount = 0;
       const outOfStockProducts = [];
-
+  
       for (const item of items) {
         const product = await Product.findByPk(item.productId);
         
@@ -131,30 +131,29 @@ class OrderController {
           outOfStockProducts.push(`Producto ${item.productId} sin stock suficiente`);
           continue;
         }
-
+  
         lineItems.push({
           price_data: {
             currency: 'usd',
             product_data: {
               name: product.name,
-              // podemos añadir más detalles como imagen
-              // images: [product.imageUrl]
             },
             unit_amount: Math.round(product.price * 100) // a centavos
           },
           quantity: item.quantity
         });
-
+  
         totalAmount += product.price * item.quantity;
       }
-
+  
       if (outOfStockProducts.length > 0) {
         res.status(400).json({ 
           message: 'Algunos productos no tienen stock suficiente',
           errors: outOfStockProducts
         });
+        return;
       }
-
+  
       // creamos sesión de checkout de Stripe
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ['card'],
@@ -164,7 +163,7 @@ class OrderController {
         cancel_url: `${process.env.FRONTEND_URL}/order-cancel`,
         metadata: { cartId }
       });
-
+  
       // creamos orden en base de datos
       const order = await Order.create({
         total: totalAmount,
@@ -173,16 +172,25 @@ class OrderController {
         userId: 1,
         paymentIntentId: session.id
       }, { transaction });
-
-      // bajamos el stock de los productos
+  
+      // añadimos los items de la orden sin eliminar los cart items
       for (const item of items) {
         const product = await Product.findByPk(item.productId);
         if (product) {
+          // Reducir stock
           product.stock -= item.quantity;
           await product.save({ transaction });
+  
+          // Crear OrderItem sin eliminar CartItem
+          await OrderItem.create({
+            orderId: order.id,
+            productId: product.id,
+            quantity: item.quantity,
+            price: product.price
+          }, { transaction });
         }
       }
-
+  
       // En lugar de destruir el cart, lo marcamos como usado
       await Cart.update(
         { used: true }, 
@@ -191,22 +199,17 @@ class OrderController {
           transaction 
         }
       );
-
-      // Elimina los items del carrito actual
-      await CartItem.destroy({ 
-        where: { cartId }, 
-        transaction 
-      });
-
+  
+      // NO ELIMINAMOS los CartItems, solo marcamos el cart como usado
       await transaction.commit();
-
+  
       // devolvemos la URL de checkout de stripe
       res.json({ 
         checkoutUrl: session.url,
         sessionId: session.id,
         orderId: order.id
       });
-
+  
     } catch (error) {
       await transaction.rollback();
       console.error('Error creando checkout:', error);
