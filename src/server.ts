@@ -28,7 +28,7 @@ const PORT = process.env.PORT || 3000;
 // middlewares
 // configuración de CORS para permitir credenciales
 app.use(cors({
-    origin: 'http://localhost:5185', // URL de la app cliente
+    origin: process.env.FRONTEND_URL,
     credentials: true
   }));
 app.use(helmet());
