@@ -127,7 +127,10 @@ const verifyStripeSession = async (req: Request, res: Response): Promise<void> =
   try {
     const { sessionId } = req.params;
 
-    // Buscamos la orden con este sessionId (paymentIntentId)
+    // Primero, recuperamos la sesión de checkout de Stripe
+    const session = await stripe.checkout.sessions.retrieve(sessionId);
+
+    // Buscamos la orden usando el sessionId de Stripe
     const order = await Order.findOne({
       where: { paymentIntentId: sessionId }
     });
@@ -139,11 +142,8 @@ const verifyStripeSession = async (req: Request, res: Response): Promise<void> =
       return;
     }
 
-    // Verificamos el estado del pago en Stripe
-    const paymentIntent = await stripe.paymentIntents.retrieve(sessionId);
-
-    // Verificamos si el pago fue exitoso
-    if (paymentIntent.status === 'succeeded') {
+    // Verificamos el estado del pago
+    if (session.payment_status === 'paid') {
       // Actualizamos el estado de la orden a PAID
       order.status = OrderStatus.PAID;
       await order.save();
@@ -161,7 +161,7 @@ const verifyStripeSession = async (req: Request, res: Response): Promise<void> =
     } else {
       res.status(400).json({ 
         message: 'El pago aún no ha sido confirmado',
-        currentStatus: paymentIntent.status
+        currentStatus: session.payment_status
       });
     }
 
