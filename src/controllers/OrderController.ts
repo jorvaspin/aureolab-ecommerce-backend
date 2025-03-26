@@ -155,14 +155,6 @@ class OrderController {
         });
       }
 
-      // creamos orden en base de datos
-      const order = await Order.create({
-        total: totalAmount,
-        status: OrderStatus.PENDING,
-        cartId: cartId,
-        userId: 1
-      }, { transaction });
-
       // creamos sesión de checkout de Stripe
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ['card'],
@@ -170,10 +162,17 @@ class OrderController {
         mode: 'payment',
         success_url: `${process.env.FRONTEND_URL}/order-success?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${process.env.FRONTEND_URL}/order-cancel`,
-        metadata: {
-          orderId: order.id.toString()
-        }
+        metadata: { cartId }
       });
+
+      // creamos orden en base de datos
+      const order = await Order.create({
+        total: totalAmount,
+        status: OrderStatus.PENDING,
+        cartId: cartId,
+        userId: 1,
+        paymentIntentId: session.id
+      }, { transaction });
 
       // bajamos el stock de los productos
       for (const item of items) {
