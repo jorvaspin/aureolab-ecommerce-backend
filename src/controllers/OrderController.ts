@@ -183,17 +183,22 @@ class OrderController {
         }
       }
 
-      if (cart) {
-        cart.used = true;
-      }
-      await cart?.save({ transaction });
+      // En lugar de destruir el cart, lo marcamos como usado
+      await Cart.update(
+        { used: true }, 
+        { 
+          where: { id: cartId }, 
+          transaction 
+        }
+      );
+
+      // Elimina los items del carrito actual
+      await CartItem.destroy({ 
+        where: { cartId }, 
+        transaction 
+      });
 
       await transaction.commit();
-
-      // destruimos el carrito
-      await cart?.destroy();
-
-      
 
       // devolvemos la URL de checkout de stripe
       res.json({ 
