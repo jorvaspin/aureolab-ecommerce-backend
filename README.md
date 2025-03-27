@@ -26,7 +26,9 @@ Los archivos más relevantes en la lógica de la IA son:
 - 📂 **`controllers`** → Controladores para la parte logica del proyecto
 - 📂 **`models`** → Modelos que interactuan con el tipado de dato en la base de datos y sus tablas relacionadas
 - 📂 **`routes`** → Enpoints para consumir o enviar datos
+
   📂 **`seed/`**
+
   - 📂 **`productSeed.ts`** → Semilla que carga los productos por defecto creados.
 
 **`server.ts`** → Servidor de node con express para usar el proyecto completo
