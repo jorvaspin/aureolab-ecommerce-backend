@@ -67,6 +67,10 @@ import {
       validate: {
         min: 0,
         isFloat: true
+      },
+      get() {
+        const value = this.getDataValue('price');
+        return value !== null && value !== undefined ? parseFloat(value.toString()) : null;
       }
     },
     stock: {

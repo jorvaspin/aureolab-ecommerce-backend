@@ -14,7 +14,7 @@ class Cart extends Model {
   public id!: string;
   public userId?: number;
   public sessionId?: string;
-  public used!: boolean; // Add the 'used' property
+  public used!: boolean; 
 
   // delcaramos los métodos de asociación
   public getItems!: HasManyGetAssociationsMixin<CartItem>;
@@ -22,6 +22,7 @@ class Cart extends Model {
 
   // ts
   public items?: CartItem[];
+  static CartItem: any;
 }
 
 Cart.init({
