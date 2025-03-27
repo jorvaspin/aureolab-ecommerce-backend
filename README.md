@@ -40,6 +40,15 @@ Los archivos más relevantes en la lógica de la IA son:
 Al levantar el servidor obtendremos distintos endpoints para nuestro sistema, estos serás consumidos por el fronted, que interactuará con el carro de compra,
 las ordenes de pago, etc.
 
+---
+
+# 🚀 DEMO
+
+```
+https://aureolab-ecommerce-backend.onrender.com/
+
+```
+
 # 🚀 Stripe Payment
 
 Se utilizo Stripe para generar el pago, si bien nos entrega una gran abanico de opciones de pago, en esta prueba se usa el method_type: CARD.
