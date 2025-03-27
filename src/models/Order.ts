@@ -2,11 +2,13 @@ import {
     Model, 
     DataTypes, 
     Optional,
-    BelongsToManyAddAssociationMixin
+    BelongsToManyAddAssociationMixin,
+    HasManyGetAssociationsMixin
 } from 'sequelize';
 import sequelize from '../config/database';
 import Product from './Product';
 import { Cart, CartItem } from './Cart';
+import Refund from './Refund';  // Importa el modelo de Refund
 
 // tipos de estado de la orden
 enum OrderStatus {
@@ -52,6 +54,9 @@ class Order extends Model<OrderAttributes, OrderCreationAttributes>
 
     // definimos método de asociación
     public addProduct!: BelongsToManyAddAssociationMixin<Product, number>;
+    
+    // método para obtener refunds
+    public getRefunds!: HasManyGetAssociationsMixin<Refund>;
 }
 
 Order.init({
@@ -157,6 +162,17 @@ Product.belongsToMany(Order, {
 Order.belongsTo(Cart, {
     foreignKey: 'cartId',
     as: 'originalCart'
+});
+
+// Asociación con Refund
+Refund.belongsTo(Order, {
+    foreignKey: 'orderId',
+    as: 'order'
+});
+
+Order.hasMany(Refund, {
+    foreignKey: 'orderId',
+    as: 'refunds'
 });
 
 // Asociaciones

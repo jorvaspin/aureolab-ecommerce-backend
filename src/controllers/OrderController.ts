@@ -5,6 +5,7 @@ import { Cart, CartItem } from '../models/Cart';
 import Product from '../models/Product';
 import sequelize from '../config/database';
 import Stripe from 'stripe';
+import Refund, { RefundStatus } from '../models/Refund'; 
 import { createPaymentIntent } from '../controllers/StripeController';
 
 // iniciamos stripe con la clave secreta
@@ -237,8 +238,15 @@ class OrderController {
           as: 'products', // especificamos el alias definido en la relación
           through: {
             attributes: ['quantity']
-          }
-        }],
+          }, 
+        },
+        // AÑADIMOS LOS REFUNDS
+        {
+          model: Refund,
+          as: 'refunds'
+        }
+      ],
+
         order: [['createdAt', 'DESC']]
       });
   
@@ -257,9 +265,11 @@ class OrderController {
 
   // solicitamos el reembolso
   static async requestRefund(req: Request, res: Response): Promise<void> {
+    const transaction = await sequelize.transaction();
+
     try {
-      const { orderId } = req.params;
-      const { amount, reason } = req.body;
+      const { orderId, sessionId } = req.params;
+      const { amount, reason, metaData } = req.body;
 
       const order = await Order.findByPk(orderId);
 
@@ -278,25 +288,50 @@ class OrderController {
         return;
       }
 
+      // treamos el paymentIntentId de stripe
+      if (!order.paymentIntentId) {
+        res.status(400).json({ 
+          message: 'El paymentIntentId no está definido para esta orden' 
+        });
+        return;
+      }
+
+      const paymentIntent = await stripe.checkout.sessions.retrieve(order.paymentIntentId);
+      
       // procesamos reembolso en Stripe
       const refund = await stripe.refunds.create({
-        payment_intent: order.paymentIntentId!,
+        payment_intent: typeof paymentIntent.payment_intent === 'string' ? paymentIntent.payment_intent : undefined,
         amount: Math.round(amount * 100)
       });
+
+      // Crear registro de reembolso en la base de datos
+      const refundRecord = await Refund.create({
+        orderId: order.id,
+        amount: amount,
+        status: refund.status === 'succeeded' ? RefundStatus.COMPLETED : RefundStatus.FAILED,
+        stripeRefundId: refund.id,
+        reason: reason,
+        metaData: metaData
+      }, { transaction });
 
       // actualizamos el estado de la orden
       order.status = amount === order.total 
         ? OrderStatus.REFUNDED 
         : OrderStatus.PARTIALLY_REFUNDED;
 
-      await order.save();
+      await order.save({ transaction });
+
+      // Commit the transaction
+      await transaction.commit();
 
       res.json({
         message: 'Reembolso procesado exitosamente',
-        refund
+        refund: refundRecord,
+        stripeRefund: refund
       });
 
     } catch (error) {
+      await transaction.rollback();
       console.error('Error procesando reembolso:', error);
       res.status(500).json({ 
         message: 'Error al procesar reembolso',

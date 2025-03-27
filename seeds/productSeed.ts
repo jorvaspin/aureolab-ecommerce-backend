@@ -13,35 +13,40 @@ const productSeed = async () => {
         description: 'Teléfono inteligente de última generación',
         price: 599.99,
         stock: 50,
-        category: 'Electrónica'
+        category: 'Electrónica',
+        imageUrl: 'https://i01.appmifile.com/webfile/globalimg/products/m/K19A/specs1.png'
       },
       {
         name: 'Laptop Pro',
         description: 'Computadora portátil de alto rendimiento',
         price: 1299.99,
         stock: 20,
-        category: 'Computadoras'
+        category: 'Computadoras',
+        imageUrl: 'https://atlas-content-cdn.pixelsquid.com/assets_v2/246/2461903618920420852/jpeg-600/G03.jpg'
       },
       {
         name: 'Tablet Mini',
         description: 'Tableta pequeña y ligera',
         price: 299.99,
         stock: 10,
-        category: 'Electrónica'
+        category: 'Electrónica',
+        imageUrl: 'https://atlas-content-cdn.pixelsquid.com/assets_v2/248/2484944479010690212/jpeg-600/G03.jpg'
       },
       {
         name: 'Smartwatch Z',
         description: 'Reloj inteligente con seguimiento de actividad',
         price: 199.99,
         stock: 30,
-        category: 'Electrónica'
+        category: 'Electrónica',
+        imageUrl: 'https://s.alicdn.com/@sc04/kf/H0dcdaae212d844a28e36b6b11ea93d26u.png_720x720q50.png'
       },
       {
         name: 'Cámara 4K',
         description: 'Cámara de video con grabación en ultra alta definición',
         price: 499.99,
         stock: 15,
-        category: 'Electrónica'
+        category: 'Electrónica',
+        imageUrl: 'https://www.kindpng.com/picc/m/50-506934_video-cameras-professional-video-camera-4k-resolution-panasonic.png'
       }
     ];
 
