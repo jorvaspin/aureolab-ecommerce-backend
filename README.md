@@ -7,8 +7,11 @@ Este proyecto es para una prueba técnica donde se crea una API backend para una
 # 🚀 Tecnologías Utilizadas
 
 ✅ Node.js con Express para la API.
+
 ✅ TypeScript
+
 ✅ PostgreSQL para almacenamiento de productos, ordenes de compra, carrito y reembolsos.
+
 ✅ Jest para unas pruebas básicas
 
 ---
@@ -25,7 +28,8 @@ Los archivos más relevantes en la lógica de la IA son:
 - 📂 **`routes`** → Enpoints para consumir o enviar datos
   📂 **`seed/`**
   - 📂 **`productSeed.ts`** → Semilla que carga los productos por defecto creados.
-    **`server.ts`** → Servidor de node con express para usar el proyecto completo
+
+**`server.ts`** → Servidor de node con express para usar el proyecto completo
 
 ---
 
