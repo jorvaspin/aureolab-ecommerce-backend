@@ -40,6 +40,30 @@ Los archivos más relevantes en la lógica de la IA son:
 Al levantar el servidor obtendremos distintos endpoints para nuestro sistema, estos serás consumidos por el fronted, que interactuará con el carro de compra,
 las ordenes de pago, etc.
 
+# 🚀 Stripe Payment
+
+Se utilizo Stripe para generar el pago, si bien nos entrega una gran abanico de opciones de pago, en esta prueba se usa el method_type: CARD.
+La cual al ir al pago, nos muestra los detalles de pago con tarjeta de credito
+
+---
+
+### 🔹 **Objetivo**
+
+Se utilizan los paymentIntents y los sessionId para generar y manejar los estados de los pagos y ordenes de pago. Se uso el SDK JS de stripe para
+la creación de pagos y los refunds.
+
+#### CARD TEST STRIPE
+
+```json
+
+Número de tarjeta: 4242 4242 4242 4242
+Fecha: 12/34
+Codigo: 123
+
+```
+
+---
+
 # 📚 API Endpoints modo ejemplo
 
 A continuación se detallan los endpoints de la API con ejemplos de solicitudes y respuestas.
